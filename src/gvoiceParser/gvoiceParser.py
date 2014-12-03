@@ -21,7 +21,7 @@ class Contact(object):
     def __nonzero__(self):
         ''' Returns whether or not the object has no effective information'''
         return bool(self.phonenumber) or bool(self.name)
-    
+
     @staticmethod
     def get_node(node):
         '''Given an HTML node, finds the self-or-descendant that encodes a Contact'''
@@ -31,7 +31,7 @@ class Contact(object):
         if not contactnode:
             contactnode = node.find(Parser.as_xhtml('.//div[@class="contributor vcard"]/a[@class="tel"]'))
         return contactnode
-    
+
     @classmethod
     def from_node(cls, node):
         ''' finds and returns the first contact found beneath the node in the tree'''
@@ -61,7 +61,7 @@ class GVoiceRecord(object):
     def dump(self):
         ''' Returns a string that encodes the information inside the object.'''
         return "%s; %s" % (self.contact.dump(), self.date)
-    #All GVoiceRecord objects output as strings their types and dump data 
+    #All GVoiceRecord objects output as strings their types and dump data
     def __str__(self):
         return "%s: %s" % (self.__class__.__name__, self.dump())
     def __nonzero__(self):
@@ -72,7 +72,7 @@ class GVoiceRecord(object):
     def from_node(cls, node, date_class):
         ''' finds and returns the first GVoiceRecord beneath the node in the tree.'''
         record_obj = cls()
-        record_obj.contact = Contact.from_node(node)    
+        record_obj.contact = Contact.from_node(node)
         record_obj.date = ParseTools.parse_date(node.find(Parser.as_xhtml('./abbr[@class="%s"]' % date_class)).attrib["title"])
         return record_obj
 
@@ -92,16 +92,16 @@ class TelephonyRecord(GVoiceRecord):
     def __nonzero__(self):
         ''' Returns whether or not the object has no effective information'''
         return super(TelephonyRecord, self) and bool(self.contact)
-    
+
     @staticmethod
     def get_node(node):
         '''Given an HTML node, finds the self-or-descendant that encodes a TelephonyRecord'''
         if node.tag == "{http://www.w3.org/1999/xhtml}div" and node.attrib["class"] == "haudio":
             return node
-        
+
         node = node.find(Parser.as_xhtml('.//div[@class="haudio"]'))
         return node if node else None
-    
+
     @classmethod
     def from_node(cls, node):
         ''' finds and returns the first TelephonyRecord beneath the node in the tree.'''
@@ -112,13 +112,13 @@ class TelephonyRecord(GVoiceRecord):
             return None
         base_obj = GVoiceRecord.from_node(node, "published")
         telephony_obj = cls(base_obj.contact, base_obj.date)
-                
+
         duration_text = node.findtext(Parser.as_xhtml('./abbr[@class="duration"]'))
         if duration_text is not None: #but 0 is OK
             telephony_obj.duration = ParseTools.parse_time(duration_text)
-        
+
         return telephony_obj
-        
+
 
 class CallRecord(TelephonyRecord):
     __slots__ = ['calltype']
@@ -134,7 +134,7 @@ class CallRecord(TelephonyRecord):
     def __nonzero__(self):
         ''' Returns whether or not the object has no effective information'''
         return super(CallRecord, self) and bool(self.calltype)
-    
+
     @staticmethod
     def get_node(node):
         '''Given an HTML node, finds the self-or-descendant that encodes a CallRecord'''
@@ -144,29 +144,29 @@ class CallRecord(TelephonyRecord):
         if node.find(Parser.as_xhtml('./audio')): #is audio, not call
             return None
         return node
-        
+
     @classmethod
     def from_node(cls, node):
         ''' finds and returns the first CallRecord found beneath the node in the tree'''
-        
+
         node = cls.get_node(node)
-            
+
         if node is None:
             return None
-        
+
         base_obj = TelephonyRecord.from_node(node)
         calltype = ParseTools.get_label(node)
-        
+
         return cls(base_obj.contact, base_obj.date, base_obj.duration, calltype)
-        
+
 class AudioRecord(TelephonyRecord):
     __slots__ = ['audiotype', 'text', 'confidence', 'filename']
     #audioTypes = ['Recording', 'Voicemail']
-    def __init__(self, contact = None, date = None, duration = None, 
+    def __init__(self, contact = None, date = None, duration = None,
                  audiotype = None, text = None, confidence = None, filename = None):
         super(AudioRecord, self).__init__(contact, date, duration)
-        self.audiotype = audiotype 
-        self.text = text 
+        self.audiotype = audiotype
+        self.text = text
         self.confidence = confidence
         self.filename = filename
     def __repr__(self):
@@ -199,20 +199,20 @@ class AudioRecord(TelephonyRecord):
     def from_node(cls, node):
         ''' finds and returns the first AudioRecord beneath the node in the tree.'''
         node = cls.get_node(node)
-            
+
         if node is None:
             return None
-        
+
         base_obj = TelephonyRecord.from_node(node)
         audio_obj = cls(base_obj.contact, base_obj.date, base_obj.duration)
-        
+
         descriptionNode = node.find(Parser.as_xhtml('./span[@class="description"]'))
         if descriptionNode and descriptionNode.findtext(Parser.as_xhtml('./span[@class="full-text"]')):
             #!!! FIX: html decode
             fullText = descriptionNode.findtext(Parser.as_xhtml('./span[@class="full-text"]'))
             if fullText != 'Unable to transcribe this message.':
                 audio_obj.text = fullText
-   
+
             confidence_values = descriptionNode.findall(Parser.as_xhtml('./span/span[@class="confidence"]'))
             totalconfid = sum( float(i.findtext('.')) for i in confidence_values )
             audio_obj.confidence = totalconfid / len(confidence_values)
@@ -226,7 +226,7 @@ class TextRecord(GVoiceRecord):
         super(TextRecord, self).__init__(contact, date)
         self.text = text
     def __repr__(self):
-        return "AudioRecord(%s, %s, %s)" % (self.contact, self.date, self.text) 
+        return "TextRecord(%s, %s, %s)" % (self.contact, self.date, self.text)
     def dump(self):
         ''' Returns a string that encodes the information inside the object.'''
         return '%s %s' % (super(TextRecord, self).dump(), self.text)
@@ -240,7 +240,7 @@ class TextRecord(GVoiceRecord):
         base_obj = GVoiceRecord.from_node(node, "dt")
         # !!! FIX: html decode the text content
         text = ParseTools.unescape(node.findtext(Parser.as_xhtml('./q')))
-        
+
         return cls(base_obj.contact, base_obj.date, text)
 
 class TextConversationList(list):
@@ -251,7 +251,7 @@ class TextConversationList(list):
     def dump(self):
         ''' Returns a string that encodes the information inside the object.'''
         return '%s %s' % (self.contact.dump(), list(txt.dump() for txt in self))
-    
+
     @staticmethod
     def get_node(node):
         '''Given an HTML node, finds the self-or-descendant that encodes a TextConversationList'''
@@ -261,34 +261,34 @@ class TextConversationList(list):
         return conversationnode if conversationnode else None
 
     @classmethod
-    def from_node(cls, node, onewayname): 
+    def from_node(cls, node, onewayname):
         ''' finds and returns the first TextConversationList beneath the node in the tree.
         The onewayname parameter is used to set the contact for outgoing texts when there is no replay'''
         #get node of interest
         conversationnode = cls.get_node(node)
         if conversationnode is None:
             return None
-        
+
         #now move on to main exec
         textnodes = conversationnode.findall(Parser.as_xhtml('./div[@class="message"]'))
         #!!! FIX? Why is this necessary?
         if not textnodes:
             return None
-        
+
         txtConversation_obj = cls()
         for txtNode in textnodes:
             txtConversation_obj.append(TextRecord.from_node(txtNode))
-        
+
         #set to the contact if is "real" (has name). Clone via constructor
         txtConversation_obj.contact = next(
            (Contact(txt.contact.phonenumber, txt.contact.name ) for txt in txtConversation_obj if txt.contact.name is not None),
            #else use default one-way name, and try to find matching phone number later
            Contact(None, onewayname)
         )
-        
+
         return txtConversation_obj
-        
-#####--------------------------------        
+
+#####--------------------------------
 
 class ParseTools:
     @staticmethod
@@ -339,11 +339,11 @@ class ParseTools:
         ''' Gets a category label for the HTML file '''
         labelNodes = node.findall(Parser.as_xhtml('./div[@class="tags"]/a[@rel="tag"]'))
         validtags = ('placed', 'received', 'missed', 'recorded', 'voicemail') #Valid categories
-        for label in (node.attrib['href'].rsplit("#")[1] for node in labelNodes): 
+        for label in (node.attrib['href'].rsplit("#")[1] for node in labelNodes):
             if label in validtags: #last part of label href is valid label
                 return label
         return None
-    
+
 ##-------------------
 
 class Parser:
@@ -351,7 +351,7 @@ class Parser:
     def as_xhtml(path):
         ''' turns a regular xpath expression into an XHTML one'''
         return re.sub('/(?=\w)', '/{http://www.w3.org/1999/xhtml}', path)
-    
+
     @classmethod
     def process_file(cls, filename):
         '''gets the gvoiceParser object from a file location'''
@@ -379,7 +379,7 @@ class Parser:
         obj = CallRecord.from_node(tree)
         if obj: #if text, then done
             return obj
-        #AUDIO            
+        #AUDIO
         obj = AudioRecord.from_node(tree)
         if obj: #if text, then done
             return obj
