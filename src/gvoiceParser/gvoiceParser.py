@@ -12,7 +12,7 @@ class Contact(object):
         self.phonenumber = phonenumber
         self.name = name
     def __repr__(self):
-        return "Contact(%s, %s)" % (repr(self.name), repr(self.ponenumber))
+        return "Contact(%s, %s)" % (repr(self.name), repr(self.phonenumber))
     def dump(self):
         ''' Returns a string that encodes the information inside the object.'''
         return "%s (%s)" % (self.name, self.phonenumber)
