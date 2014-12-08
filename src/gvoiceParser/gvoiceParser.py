@@ -21,6 +21,10 @@ class Contact(object):
     def __nonzero__(self):
         ''' Returns whether or not the object has no effective information'''
         return bool(self.phonenumber) or bool(self.name)
+    def __eq__(self,other):
+        return self.phonenumber==other.phonenumber
+    def __hash__(self):
+        return hash(self.phonenumber)
 
     @staticmethod
     def get_node(node):
@@ -221,10 +225,11 @@ class AudioRecord(TelephonyRecord):
         return audio_obj
 
 class TextRecord(GVoiceRecord):
-    __slots__ = ['text']
+    __slots__ = ['text','receiver']
     def __init__(self, contact = None, date = None, text = None):
         super(TextRecord, self).__init__(contact, date)
-        self.text = text
+        self.text     = text
+        self.receiver = Contact()
     def __repr__(self):
         return "TextRecord(%s, %s, %s)" % (self.contact, self.date, self.text)
     def dump(self):
@@ -261,7 +266,7 @@ class TextConversationList(list):
         return conversationnode if conversationnode else None
 
     @classmethod
-    def from_node(cls, node, onewayname):
+    def from_node(cls, node, onewayname, filename, mynumbers):
         ''' finds and returns the first TextConversationList beneath the node in the tree.
         The onewayname parameter is used to set the contact for outgoing texts when there is no replay'''
         #get node of interest
@@ -275,16 +280,48 @@ class TextConversationList(list):
         if not textnodes:
             return None
 
+        #Read each text message, making a note of whether I sent it
         txtConversation_obj = cls()
+        conv_with           = None
         for txtNode in textnodes:
-            txtConversation_obj.append(TextRecord.from_node(txtNode))
+            txtmsg = TextRecord.from_node(txtNode)
 
-        #set to the contact if is "real" (has name). Clone via constructor
-        txtConversation_obj.contact = next(
-           (Contact(txt.contact.phonenumber, txt.contact.name ) for txt in txtConversation_obj if txt.contact.name is not None),
-           #else use default one-way name, and try to find matching phone number later
-           Contact(None, onewayname)
-        )
+            #TODO: Skip Google Voice error messages
+            if txtmsg.contact.name=='Google Voice':
+                continue
+            if not txtmsg.contact.name and not txtmsg.contact.phonenumber:
+                continue
+
+            if txtmsg.contact.phonenumber in mynumbers:
+                txtmsg.contact = Contact(name="###ME###",phonenumber=mynumbers[0])
+            else:
+                conv_with = txtmsg.contact
+            txtConversation_obj.append(txtmsg)
+
+        #All contacts on conversation
+        unique_contacts = list(set(txt.contact for txt in txtConversation_obj))
+
+        #I sent an unreplied out-going message
+        if not conv_with:
+            conv_with = Contact(None, onewayname)
+            unique_contacts.append(conv_with)
+
+        #I received a text and did not reply
+        if len(unique_contacts)==1:
+            unique_contacts.append(Contact(name="###ME###",phonenumber=mynumbers[0]))
+        elif len(unique_contacts)>2:  #Multiway conversation
+            print "Multiway conversation detected!"
+            print filename
+            print unique_contacts
+            return txtConversation_obj
+
+        #Note who I am conversing with. Clone by constructor
+        txtConversation_obj.contact = Contact(name=conv_with.name,phonenumber=conv_with.phonenumber)
+
+        #Set receivers for each text message in the conversation
+        recipient = {unique_contacts[0]:unique_contacts[1], unique_contacts[1]:unique_contacts[0]}
+        for i in txtConversation_obj:
+            i.receiver = recipient[i.contact]
 
         return txtConversation_obj
 
@@ -353,7 +390,7 @@ class Parser:
         return re.sub('/(?=\w)', '/{http://www.w3.org/1999/xhtml}', path)
 
     @classmethod
-    def process_file(cls, filename):
+    def process_file(cls, filename, mynumbers):
         '''gets the gvoiceParser object from a file location'''
         ##BEGIN DEBUG
         #tb = html5lib.getTreeBuilder("etree", implementation=etree.ElementTree)
@@ -363,16 +400,17 @@ class Parser:
         ##END DEBUG
         with open(filename, 'r') as f: #read the file
             tree = html5lib.parse(f, encoding="iso-8859-15")
-        return cls.process_tree(tree, filename) #do the loading
+        return cls.process_tree(tree, filename, mynumbers) #do the loading
 
     @staticmethod
-    def process_tree(tree, filename = None):
+    def process_tree(tree, filename, mynumbers):
         '''gets the gvoiceParser object from an element tree'''
         #TEXTS
+        #print filename
         onewayname = tree.findtext(Parser.as_xhtml('.//title'));
         onewayname = onewayname[6::] if onewayname.startswith("Me to") else None
         #process the text files
-        obj = TextConversationList.from_node(tree, onewayname)
+        obj = TextConversationList.from_node(tree, onewayname, filename, mynumbers)
         if obj: #if text, then done
             return obj
         #CALLS
