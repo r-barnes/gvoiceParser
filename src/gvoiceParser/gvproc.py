@@ -198,9 +198,10 @@ parser.add_argument('path',     help='Directory containing Google Voice files or
 parser.add_argument('database', help='Name of database to create or append to.')
 parser.add_argument('--contactcsv','-f',action='store',default='contacts.csv',help="File to write discovered contacts to.")
 parser.add_argument('--clear',  help='Clear database prior to inserting new Google Voice records.', action='store_const', const=True, default=False)
+parser.add_argument('--mynumbers', '-m', action='store',default='',help="Comma-delimited list of this account's phone numbers")
 args = parser.parse_args()
 
-mynumbers = ['13212227637','16127085031','15102697425']
+mynumbers = args.mynumbers.split(',')
 
 if os.path.isfile(args.contactcsv):
   print "File '%s' already exists. Will not overwrite. Quitting" % (args.contactcsv)

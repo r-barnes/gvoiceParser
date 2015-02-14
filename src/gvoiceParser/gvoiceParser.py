@@ -269,6 +269,7 @@ class TextConversationList(list):
     def from_node(cls, node, onewayname, filename, mynumbers):
         ''' finds and returns the first TextConversationList beneath the node in the tree.
         The onewayname parameter is used to set the contact for outgoing texts when there is no replay'''
+        '''*mynumbers* is a list of the phone numbers the account user uses'''
         #get node of interest
         conversationnode = cls.get_node(node)
         if conversationnode is None:
@@ -392,6 +393,7 @@ class Parser:
     @classmethod
     def process_file(cls, filename, mynumbers):
         '''gets the gvoiceParser object from a file location'''
+        '''*mynumbers* is a list of the phone numbers the account user uses'''
         ##BEGIN DEBUG
         #tb = html5lib.getTreeBuilder("etree", implementation=etree.ElementTree)
         #p = html5lib.HTMLParser(tb)
@@ -405,6 +407,7 @@ class Parser:
     @staticmethod
     def process_tree(tree, filename, mynumbers):
         '''gets the gvoiceParser object from an element tree'''
+        '''*mynumbers* is a list of the phone numbers the account user uses'''
         #TEXTS
         #print filename
         onewayname = tree.findtext(Parser.as_xhtml('.//title'));
