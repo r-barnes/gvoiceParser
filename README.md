@@ -74,5 +74,12 @@ The command takes the following arguments
    numbers. This is useful because you do not often have yourself in your
    contacts list.
 
+Notes
+=====
+
+If you need to parse Google Voice messages stored in Hangouts, Steven Zhang has
+a repo [here](https://github.com/stevenqzhang/hangout-slack-import) which may
+help.
+
   [1]: https://www.google.com/settings/takeout
   [2]: https://code.google.com/p/googlevoice-to-sqlite/
