@@ -207,6 +207,7 @@ if os.path.isfile(args.contactcsv):
   print "File '%s' already exists. Will not overwrite. Quitting" % (args.contactcsv)
   sys.exit(-1)
 
+number_notes = {}
 if args.contacts:
   [args.contacts, number_notes] = ReadContactsFile(args.contacts)
 
