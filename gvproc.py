@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 #Author: Richard Barnes (rbarnes@umn.edu)
 import os
-import gvoiceParser
+import gvParserLib
 import sys
 import sqlite3
 import csv

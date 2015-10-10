@@ -1,23 +1,21 @@
 ##gvoiceParser
-####a parser for Google Voice Takeout data<br>0.5.0 (2013-12-26)<br>&copy; 2011-2013 Avi Levin, under LGPL v2.1
-##Modified by Richard Barnes
-----
 
-The gvoiceParser project aims to make the thousands of tiny files generated from [Google Voice Takeout][1] more useful. This effort consists of three parts:
+The gvoiceParser project aims to make the thousands of tiny files generated from
+[Google Voice Takeout][1] more useful. This effort consists of three parts:
 
- 1. A Python library for interpreting the HTML files *working!*
- 2. A SQLite database containing the contents of all the HTML files
+ 1. A Python library for interpreting the HTML files ("gvParserLib.py")
+ 2. A program to invoke the library and load its contents into an SQLite
+    database ("gvproc.py")
 
-gvoiceParser is a rewrite of the previous [googlevoice-to-sqlite][2] script.
-
-Note that this is currently a Python 2.7 script, with dependencies on `dateutil` and `html5lib`.
+Note that this is currently a Python 2.7 script, with dependencies on `dateutil`
+and `html5lib`.
 
 Library Usage
 =============
 A GoogleVoice dump gives you a boatload of useless HTML files.
 
-`gvoiceParser.Parser.process_file` processes one such file. If it is successful,
-it returns a record. Otherwise, it returns `None`.
+`gvoiceParser.Parser.process_file` in "gvParserLib.py" processes one such file.
+If it is successful, it returns a record. Otherwise, it returns `None`.
 
 You can use it in a loop, like so, to read all the GoogleVoice files
 
@@ -41,8 +39,8 @@ place here.
 Usage for the Rest of Us
 ========================
 
-What's that? You want your GV numbers in a nice database so you back-up them up
-or do stats or something? Got you covered.
+What's that? You want your GV numbers in a nice database so you can back-up them
+up or do stats or something? Got you covered.
 
 There's a handy file in the repo named "gvproc.py".
 
@@ -78,8 +76,19 @@ Notes
 =====
 
 If you need to parse Google Voice messages stored in Hangouts, Steven Zhang has
-a repo [here](https://github.com/stevenqzhang/hangout-slack-import) which may
-help.
+a repo [here][3] which may help.
+
+Credits
+=======
+The "gvoiceParser.py" library was original built by [Avi
+Levin](https://github.com/Arithmomaniac) and released under the LGPL v2.1. He
+has since modified his repository to identify [Richard's
+repo](https://github.com/r-barnes/gvoiceParser) as the primary development
+effort.
+
+Avi's work, "gvoiceParser.py" library was, in turn, a rewrite of their
+[googlevoice-to-sqlite][2] script.
 
   [1]: https://www.google.com/settings/takeout
   [2]: https://code.google.com/p/googlevoice-to-sqlite/
+  [3]: https://github.com/stevenqzhang/hangout-slack-import
