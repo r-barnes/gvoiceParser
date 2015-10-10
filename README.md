@@ -81,8 +81,8 @@ a repo [here][3] which may help.
 Credits
 =======
 The "gvoiceParser.py" library was original built by [Avi
-Levin](https://github.com/Arithmomaniac) and released under the LGPL v2.1. He
-has since modified his repository to identify [Richard's
+Levin](https://github.com/Arithmomaniac) and released under the LGPL v2.1. They
+have since modified their repository to identify [Richard's
 repo](https://github.com/r-barnes/gvoiceParser) as the primary development
 effort.
 
