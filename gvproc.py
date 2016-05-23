@@ -19,7 +19,7 @@ def ReadGVoiceRecords(directory,mynumbers):
   files_processed = 0
   for fl in os.listdir(directory):
     if fl.endswith(".html"):
-      record = gvoiceParser.Parser.process_file(os.path.join(directory, fl),mynumbers)
+      record = gvParserLib.Parser.process_file(os.path.join(directory, fl),mynumbers)
 
       files_processed+=1
       if files_processed%100==0:
@@ -122,7 +122,7 @@ def FixContactNumbers(records,csvcontacts,mynumbers):
     elif not i.contact.phonenumber and i.contact.name in names_to_numbers:
       i.contact.phonenumber = names_to_numbers[i.contact.name]
 
-    if isinstance(i,gvoiceParser.TextRecord):
+    if isinstance(i,gvParserLib.TextRecord):
       if not i.receiver.name and i.receiver.phonenumber in numbers_to_names:
         i.receiver.name = numbers_to_names[i.receiver.phonenumber]
       elif not i.receiver.phonenumber and i.receiver.name in names_to_numbers:
@@ -132,7 +132,7 @@ def FixContactNumbers(records,csvcontacts,mynumbers):
 
 def WriteRecordsToSQL(cur,records):
   for i in records:
-    if isinstance(i,gvoiceParser.TextRecord):
+    if isinstance(i,gvParserLib.TextRecord):
       if i.contact.name=="###ME###":
         texttype = 'out'
         number   = i.receiver.phonenumber
@@ -145,10 +145,10 @@ def WriteRecordsToSQL(cur,records):
           print "No number for %s" % (i.contact.name)
       record = (str(i.date),number,i.text,texttype)
       cur.execute('INSERT INTO texts (time,number,message,texttype) VALUES (?,?,?,?)',record)
-    elif isinstance(i,gvoiceParser.AudioRecord):
+    elif isinstance(i,gvParserLib.AudioRecord):
       record = (str(i.date),i.contact.phonenumber,i.duration.total_seconds(),i.audiotype,i.text,i.confidence,i.filename)
       cur.execute('''INSERT INTO audio (time, number, duration, type, text, confidence, filename) VALUES (?,?,?,?,?,?,?)''',record)
-    elif isinstance(i,gvoiceParser.CallRecord):
+    elif isinstance(i,gvParserLib.CallRecord):
       if i.calltype=="missed":
         duration = None
       else:
@@ -168,8 +168,8 @@ def WriteContactRecords(filename,numbers_to_names,number_notes):
 
 def ExplodeTextRecords(records):
   #Separate text conversations from non-text conversations
-  texts     = filter(lambda x: isinstance(x,gvoiceParser.TextConversationList),records)
-  non_texts = filter(lambda x: not isinstance(x,gvoiceParser.TextConversationList),records)
+  texts     = filter(lambda x: isinstance(x,gvParserLib.TextConversationList),records)
+  non_texts = filter(lambda x: not isinstance(x,gvParserLib.TextConversationList),records)
 
   #Explode text conversations into their constituent objects
   texts   = [i for x in texts for i in x]
