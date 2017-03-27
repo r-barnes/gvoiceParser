@@ -162,7 +162,7 @@ def WriteContactRecords(filename,numbers_to_names,number_notes):
   contact_records.sort()
 
   fout = csv.writer(open(filename,'w'))
-  fout.writerow(['Name','Number'])
+  fout.writerow(['Name','Number','Notes'])
   for i in contact_records:
     note = number_notes.get(i[1],"")
     fout.writerow( (i[0],i[1],note) )
