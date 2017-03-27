@@ -42,6 +42,7 @@ def ReadContactsFile(filename):
   non_unique = [x for x in non_unique if non_unique[x]>1]
   if len(non_unique)>0:
     print "There were non-unique numbers in the contacts CSV!"
+    print(non_unique)
     sys.exit(-1)
 
   for c in contacts:
