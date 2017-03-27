@@ -152,8 +152,10 @@ def WriteRecordsToSQL(cur,records):
     elif isinstance(i,gvParserLib.CallRecord):
       if i.calltype=="missed":
         duration = None
-      else:
+      elif i.duration:
         duration = i.duration.total_seconds()
+      else:
+        duration = None
       record = (str(i.date),i.contact.phonenumber,duration,i.calltype)
       cur.execute('''INSERT INTO calls (time, number, duration, calltype) VALUES (?,?,?,?)''',record)
 
