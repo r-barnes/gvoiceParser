@@ -406,9 +406,35 @@ class Parser:
         #with open(filename, 'r') as f: #read the file
         #    tree = p.parse(f, encoding="iso-8859-15")
         ##END DEBUG
-        with open(filename, 'r') as f: #read the file
-            tree = html5lib.parse(f, encoding="iso-8859-15")
+        open_kwargs, parse_kwargs = cls._get_encoding_kwargs('iso-8859-15')
+        with open(filename, 'r', **open_kwargs) as f: #read the file
+            tree = html5lib.parse(f, **parse_kwargs)
         return cls.process_tree(tree, filename, mynumbers) #do the loading
+
+    @classmethod
+    def _get_encoding_kwargs(cls, encoding):
+        '''Account for a breaking change in newer versions of html5lib.
+        In old versions, when using html5lib.parse(), you could set the encoding using
+        the "encoding" argument. In versions past 0.9999999, this changed to
+        "override_encoding".'''
+        # If it's Python 3, just set the encoding when opening the file.
+        # This is actually the only option, since in Python 3 you can't set the encoding in any
+        # argument to html5lib.parse().
+        open_kwargs = {'encoding':encoding}
+        parse_kwargs = {}
+        if six.PY2:
+            # In newer html5lib versions, the argument is named 'override_encoding'.
+            open_kwargs = {}
+            parse_kwargs = {'override_encoding':encoding}
+            try:
+                html5lib_version = float(html5lib.__version__)
+                if html5lib_version < 0.99999999:
+                    # If html5lib's an old version, the argument is named 'encoding'.
+                    open_kwargs = {}
+                    parse_kwargs = {'encoding':encoding}
+            except ValueError:
+                pass
+        return open_kwargs, parse_kwargs
 
     @staticmethod
     def process_tree(tree, filename, mynumbers):
