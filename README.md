@@ -1,4 +1,4 @@
-##gvoiceParser
+# gvoiceParser
 
 The gvoiceParser project aims to make the thousands of tiny files generated from
 [Google Voice Takeout][1] more useful. This effort consists of three parts:
