@@ -1,6 +1,12 @@
+from __future__ import print_function
+import six
+import builtins
 import datetime
 import re
-import htmlentitydefs
+if six.PY2:
+    import htmlentitydefs as entities
+else:
+    from html import entities
 from dateutil import tz
 import dateutil.parser
 import html5lib
@@ -311,9 +317,9 @@ class TextConversationList(list):
         if len(unique_contacts)==1:
             unique_contacts.append(Contact(name="###ME###",phonenumber=mynumbers[0]))
         elif len(unique_contacts)>2:  #Multiway conversation
-            print "Multiway conversation detected!"
-            print filename
-            print unique_contacts
+            print("Multiway conversation detected!")
+            print(filename)
+            print(unique_contacts)
             return txtConversation_obj
 
         #Note who I am conversing with. Clone by constructor
@@ -339,15 +345,15 @@ class ParseTools:
                 # character reference
                 try:
                     if text[:3] == "&#x":
-                        return unichr(int(text[3:-1], 16))
+                        return builtins.chr(int(text[3:-1], 16))
                     else:
-                        return unichr(int(text[2:-1]))
+                        return builtins.chr(int(text[2:-1]))
                 except ValueError:
                     pass
             else:
                 # named entity
                 try:
-                    text = unichr(htmlentitydefs.name2codepoint[text[1:-1]])
+                    text = builtins.chr(entities.name2codepoint[text[1:-1]])
                 except KeyError:
                     pass
             return text # leave as is
