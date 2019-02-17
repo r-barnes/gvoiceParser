@@ -1,6 +1,12 @@
+from __future__ import print_function
+import six
+import builtins
 import datetime
 import re
-import htmlentitydefs
+if six.PY2:
+    import htmlentitydefs as entities
+else:
+    from html import entities
 from dateutil import tz
 import dateutil.parser
 import html5lib
@@ -311,9 +317,9 @@ class TextConversationList(list):
         if len(unique_contacts)==1:
             unique_contacts.append(Contact(name="###ME###",phonenumber=mynumbers[0]))
         elif len(unique_contacts)>2:  #Multiway conversation
-            print "Multiway conversation detected!"
-            print filename
-            print unique_contacts
+            print("Multiway conversation detected!")
+            print(filename)
+            print(unique_contacts)
             return txtConversation_obj
 
         #Note who I am conversing with. Clone by constructor
@@ -339,15 +345,15 @@ class ParseTools:
                 # character reference
                 try:
                     if text[:3] == "&#x":
-                        return unichr(int(text[3:-1], 16))
+                        return builtins.chr(int(text[3:-1], 16))
                     else:
-                        return unichr(int(text[2:-1]))
+                        return builtins.chr(int(text[2:-1]))
                 except ValueError:
                     pass
             else:
                 # named entity
                 try:
-                    text = unichr(htmlentitydefs.name2codepoint[text[1:-1]])
+                    text = builtins.chr(entities.name2codepoint[text[1:-1]])
                 except KeyError:
                     pass
             return text # leave as is
@@ -400,9 +406,35 @@ class Parser:
         #with open(filename, 'r') as f: #read the file
         #    tree = p.parse(f, encoding="iso-8859-15")
         ##END DEBUG
-        with open(filename, 'r') as f: #read the file
-            tree = html5lib.parse(f, encoding="iso-8859-15")
+        open_kwargs, parse_kwargs = cls._get_encoding_kwargs('iso-8859-15')
+        with open(filename, 'r', **open_kwargs) as f: #read the file
+            tree = html5lib.parse(f, **parse_kwargs)
         return cls.process_tree(tree, filename, mynumbers) #do the loading
+
+    @classmethod
+    def _get_encoding_kwargs(cls, encoding):
+        '''Account for a breaking change in newer versions of html5lib.
+        In old versions, when using html5lib.parse(), you could set the encoding using
+        the "encoding" argument. In versions past 0.9999999, this changed to
+        "override_encoding".'''
+        # If it's Python 3, just set the encoding when opening the file.
+        # This is actually the only option, since in Python 3 you can't set the encoding in any
+        # argument to html5lib.parse().
+        open_kwargs = {'encoding':encoding}
+        parse_kwargs = {}
+        if six.PY2:
+            # In newer html5lib versions, the argument is named 'override_encoding'.
+            open_kwargs = {}
+            parse_kwargs = {'override_encoding':encoding}
+            try:
+                html5lib_version = float(html5lib.__version__)
+                if html5lib_version < 0.99999999:
+                    # If html5lib's an old version, the argument is named 'encoding'.
+                    open_kwargs = {}
+                    parse_kwargs = {'encoding':encoding}
+            except ValueError:
+                pass
+        return open_kwargs, parse_kwargs
 
     @staticmethod
     def process_tree(tree, filename, mynumbers):
